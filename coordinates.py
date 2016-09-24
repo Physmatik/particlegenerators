@@ -171,7 +171,7 @@ def test_orb_gap(cut=0.5, size=5000):
     :param size: int
         number of points
     :param cut: float
-        width of vertical slice (for better visual representation.
+        width of vertical slice (for better visual representation).
     """
 
     fig_orb_gap = plt.figure()
@@ -180,14 +180,12 @@ def test_orb_gap(cut=0.5, size=5000):
 
     data_orb_gap = orb_gap(size=size)
 
-    selection = data_orb_gap[0] > -cut
-    data_orb_gap = data_orb_gap[:, selection]
+    selection = np.abs(data_orb_gap[0]) < cut
 
-    selection = data_orb_gap[0] < cut
-    data_orb_gap = data_orb_gap[:, selection]
-
-    ax_orb_gap.plot(data_orb_gap[0], data_orb_gap[1],
-                    data_orb_gap[2], 'k.')
+    ax_orb_gap.plot(data_orb_gap[0, selection],
+                    data_orb_gap[1, selection],
+                    data_orb_gap[2, selection],
+                    'k.')
 
     ax_orb_gap.set_xlim(-1., 1.)
     ax_orb_gap.set_ylim(-1., 1.)
