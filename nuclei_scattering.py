@@ -1,21 +1,37 @@
+"""
+Module for calculating scattering angles in nuclei-nuclei collisions.
+
+Calculates scattering angles based on energy and impact parameters.
+Different potential forms are available:
+    -- basic coulomb
+    -- momentum approximation
+    -- semi-empirical with different constant sets:
+        -- Moliere
+        -- VHB
+        -- universal
+"""
+
 from particlegenerators import base
 import numpy as np
-from numpy import ndarray, cos, sin, exp, arccos
+from numpy import ndarray, exp, arccos
 from functools import reduce
 import logging
 
-logging.basicConfig(level=0)
+logging.basicConfig(level=logging.WARN)
 
-# electron charge (SI system)
-e = 1.61 * 10 ** -19 * 9.486833 * 10 ** 19
-# Bohr radius (SI system)
+e = 1.61 * 10 ** -19 * 9.486833 * 10 ** 14
+"effective electron charge (SI system)"
+
 a0 = 5.29 * 10 ** -11
+"Bohr radius (SI system)"
 
 
+# noinspection PyShadowingNames
 class Simulation:
     POTENTIAL = dict(moliere=[0.67430, 0.00961, 0.00518, 10.0, 6.31400],
                      VHB=[0.69905, 0.05534, 0.03326, 10.79853, 6.55075],
                      universal=[0.75984, 5.71974, 6.14171, 9.5217, 6.26120])
+    "Parameters for approximation of potential."
 
     SCREEN = dict(moliere=[[0.35, 0.3],
                            [0.55, 1.2],
@@ -27,6 +43,7 @@ class Simulation:
                              [0.5099, 0.9423],
                              [0.2802, 0.4029],
                              [0.02817, 0.2016]])
+    "Parameters for calculating screening function."
 
     def __init__(self, potential_type='universal', z1=1, z2=1, m1=1, m2=1):
         if potential_type in ['moliere', 'VHB', 'universal']:
@@ -40,15 +57,27 @@ class Simulation:
         self.m1 = m1
         self.m2 = m2
 
-    def set_potential(self, s: str) -> None:
-        if s.lower() in ['moliere', 'VHB', 'universal']:
-            self.potential_name = s
-            logging.info("Potential changed to {}.".format(s))
+    def set_potential(self, name: str) -> None:
+        """
+        Change current potential of simulation.
+
+        :param str name: name of potential or it's approximation parameters set
+        """
+        if name.lower() in ['moliere', 'VHB', 'universal']:
+            self.potential_name = name
+            logging.info("Potential changed to {}.".format(name))
         else:
             logging.warning("Invalid potential name. "
                             "Current potential unchanged.")
 
-    def set_charge(self, z1=None, z2=None):
+    def set_charge(self, z1=None, z2=None) -> None:
+        """
+        Change current values for charge of target and bombarding particles.
+
+        :param int z1: charge of target in electron charge units
+        :param itn z2: charge of bombarding particles in electron charge units
+        """
+
         try:
             if float(z1).is_integer():
                 self.z1 = z1
@@ -64,12 +93,25 @@ class Simulation:
             logging.warning("Unexpected exception while setting charge."
                             " Check input parameters.")
 
-    def calculate_theta(self, energy: ndarray, p: ndarray) -> ndarray:
-        rm = self.rm(energy, p)
-        rho = self.rho(energy, rm)
-        delta = self.delta(rm, p, energy)
+    def calculate_theta(self, energy: ndarray, impact_par: ndarray) -> ndarray:
+        """
+        Main method of class. Calculate scattering angle for impact parameters
+        and energy. Using currently selected potential for class.
 
-        return arccos((rho + delta + rm) / (rho + rm))
+        :param Union[number, ndarray] energy:
+        :param Union[number, ndarray] impact_par:
+        :return:
+        """
+
+        rm = self.rm(energy, impact_par)
+        rho = self.rho(energy, rm)
+        delta = self.delta(rm, impact_par, energy)
+
+        temp = a0 * (impact_par + delta + rho) / (rho + rm)
+        print(temp)
+        selection = (temp < 1.) * (temp > -1.)
+
+        return 2 * arccos(temp[selection]), impact_par[selection]
 
     def rm(self, energy, impact_pars, eps=0.001):
         def func(r, impact):
@@ -109,30 +151,65 @@ class Simulation:
 
         return a / (1 + g) * (min_radius - impact_parameter)
 
-    def screen_func(self, r: ndarray) -> ndarray:
+    def screen_func(self, r) -> ndarray:
+        """
+        Screening func for coulomb potential. Current potential approximation
+        is used.
+
+        :param ndarray r:
+        :return: ndarray
+        """
         pars = self.SCREEN[self.potential_name]
         return reduce(lambda a, x: exp(-x[1] * r) * x[0] + a, pars,
                       np.zeros(len(r)))
 
-    def screen_func_deriv(self, r: ndarray) -> ndarray:
+    def screen_func_deriv(self, r) -> ndarray:
+        """
+        Derivative of screening func for coulomb potential.
+        Current potential approximation is used.
+
+        :param ndarray r:
+        :return:
+        """
+
         pars = self.SCREEN[self.potential_name]
         return reduce(lambda a, x: a - x[0] * x[1] * exp(-x[1] * r), pars,
                       np.zeros(len(r)))
 
-    def potential(self, r: ndarray) -> ndarray:
-        z1, z2 = self.z1, self.z2
-        result = z1 * z2 * e ** 2 / r
-        screen = self.screen_func(r)
-        return result * screen
+    def potential(self, r) -> ndarray:
+        """
+        Calculate basic coulomb potential.
 
-    def potential_deriv(self, r: ndarray) -> ndarray:
+        :param ndarray r:
+        :return:
+        """
+
+        z1, z2 = self.z1, self.z2
+        return z1 * z2 * e ** 2 / r * self.screen_func(r)
+
+    def potential_deriv(self, r) -> ndarray:
+        """
+        Calculate derivative of basic coulomb potential.
+
+        :param ndarray r:
+        :return:
+        """
         return self.potential(r) / r * self.screen_func(r) \
                + self.potential(r) * self.screen_func_deriv(r)
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     logging.info("Test run.")
     sim = Simulation()
     logging.info("Class initialization successful.")
     logging.info("Running rm method.")
-    print(sim.rm(1000, np.arange(1, 10, 1) / 2.))
+    impact_par = base.uniform(0.2, 10, 100) * a0 / 10.
+    impact_par = np.arange(5, 100) / 200 * a0
+    energy = 1
+    theta, impact_par = sim.calculate_theta(energy, impact_par)
+    theta = (theta - np.pi) * 180 / np.pi
+
+    plt.plot(impact_par, theta, 'k-')
+    plt.show()

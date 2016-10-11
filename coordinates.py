@@ -1,29 +1,34 @@
+"""
+Collection of functions that generate sources of different form.
+
+List of what is supported:
+    * flat disk
+    * orb
+    * cylinder
+    * orb with empty space inside
+"""
+
 import numpy as np
+from numpy import cos, sin, pi, ndarray
 import matplotlib.pyplot as plt
 
 from particlegenerators import base
+from particlegenerators.directions import generate_isotropic
 
 
-def disk(radius: float = 1.0, size: int = 1000,
-         polar=False) -> np.ndarray:
+def disk(radius: float = 1.0, size: int = 1000, polar=False) -> ndarray:
     """
-    Generate random position in disk source.
-
-    Origin in (0,0,0).
-    :param radius: float
-        radius of source.
-    :param size: int
-        number of values to return
-    :param polar: Boolean
-        representation of coordinates
-    :return: (3, size) numpy array.
+    Generate random position in disk source. Origin in (0,0,0).
+    
+    :param float radius: radius of source
+    :param int size: number of values to return
+    :param bool polar: representation of coordinates
+    :return: (3, size) ndarray
         (rho, phi, 0) if polar True, (x, y, 0) otherwise.
     """
 
-    # ----------------------------------------------------------------------
-    # generate position
     rho = np.sqrt(base.uniform(size=size)) * radius
-    phi = base.uniform(size=size) * 2 * np.pi
+    phi = base.uniform(size=size) * 2 * pi
     z = np.zeros(size)
 
     if polar:
@@ -31,31 +36,26 @@ def disk(radius: float = 1.0, size: int = 1000,
                               phi,
                               z))
     else:
-        position = np.vstack((rho * np.cos(phi),
-                              rho * np.sin(phi),
+        position = np.vstack((rho * cos(phi),
+                              rho * sin(phi),
                               z))
 
     return position
 
 
-def orb(radius=1., size=1000, spherical=False) -> np.ndarray:
+def orb(radius=1., size=1000, spherical=False) -> ndarray:
     """
-    Generate random positions in orb source.
-
-    Origin in (0,0,0).
-    :param radius: float
-        radius of sphere
-    :param size: int
-        number of values to generate
-    :param spherical: Boolean
-        representation of coordinates
-    :return: (3, size) numpy array
+    Generate random positions in orb source. Origin in (0,0,0).
+    
+    :param float radius: radius of sphere
+    :param int size: number of values to generate
+    :param bool spherical: representation of coordinates
+    :return: (3, size) ndarray
         (rho, phi, theta) if spherical=True, (x, y, z) otherwise.
     """
 
-    # noinspection PyTypeChecker
     rho = np.power(base.uniform(size=size), 1. / 3.) * radius
-    phi = base.uniform(size=size) * 2 * np.pi
+    phi = base.uniform(size=size) * 2 * pi
     theta = np.arccos(2 * base.uniform(size=size) - 1.)
 
     if spherical:
@@ -63,30 +63,25 @@ def orb(radius=1., size=1000, spherical=False) -> np.ndarray:
                               phi,
                               theta))
     else:
-        position = np.vstack((rho * np.sin(theta) * np.cos(phi),
-                              rho * np.sin(theta) * np.sin(phi),
-                              rho * np.cos(theta)))
+        position = np.vstack((rho * sin(theta) * cos(phi),
+                              rho * sin(theta) * sin(phi),
+                              rho * cos(theta)))
 
     return position
 
 
-def cylinder(radius=1.0, height=1.0, size=1000,
-             cylindrical=False) -> np.ndarray:
+def cylinder(radius=1.0, height=1.0, size=1000, cylindrical=False) -> ndarray:
     """
-    Generate random positions in cylindrical source.
-
-    Origin in (0,0,0)
-    :param radius: float
-        radius of cylinder
-    :param height: float
-        height of cylinder
-    :param size: int
-        number of values to generate
-    :param cylindrical: Boolean
-        representation of coordinates
-    :return: (3, size) numpy array
+    Generate random positions in cylindrical source. Origin in (0,0,0).
+    
+    :param float radius: radius of cylinder
+    :param float height: height of cylinder
+    :param int size: number of values to generate
+    :param bool cylindrical: representation of coordinates
+    :return: (3, size) ndarray
         (rho, phi, z) if cylindrical=True, (x, y, z) otherwise.
     """
+    
     if cylindrical:
         position = disk(radius=radius, size=size, polar=True)
     else:
@@ -96,37 +91,29 @@ def cylinder(radius=1.0, height=1.0, size=1000,
     return position
 
 
-def orb_gap(r1=0.5, r2=1.0, size=1000,
-            spherical=False) -> np.ndarray:
+def orb_gap(r1=0.5, r2=1.0, size=1000, spherical=False) -> ndarray:
     """
-    Generate position for orb with hole inside.
-
-    Origin in (0,0,0).
-    :param r1: float
-        inner radius
-    :param r2: float
-        outer radius
-    :param size: int
-        number of values to generate
-    :param spherical: Boolean
-        representation of coordinates
-    :return: np.ndarray (3, size)
+    Generate position for orb with hole inside. Origin in (0,0,0).
+    
+    :param float r1: inner radius
+    :param float r2: outer radius
+    :param int size: number of values to generate
+    :param bool spherical: representation of coordinates
+    :return: (3, size) ndarray
         (rho, phi, theta) if spherical is True, (x, y, z) otherwise.
     """
 
-    # noinspection PyTypeChecker
-    rho = np.power(
-        base.uniform(size=size) * (r2 ** 3 - r1 ** 3) + r1 ** 3,
-        1. / 3.)
-    position = orb(radius=r2, size=size, spherical=True)
-    position[0] = rho
+    rho = np.power(base.uniform(size=size) * (r2 ** 3 - r1 ** 3) + r1 ** 3,
+                   1. / 3.)
+    position = np.vstack((rho,
+                          generate_isotropic(size=size, cosines=False)))
 
     if spherical:
         return position
     else:
-        return np.vstack((rho * np.sin(position[2]) * np.cos(position[1]),
-                          rho * np.sin(position[2]) * np.sin(position[1]),
-                          rho * np.cos(position[2])))
+        return np.vstack((rho * sin(position[2]) * cos(position[1]),
+                          rho * sin(position[2]) * sin(position[1]),
+                          rho * cos(position[2])))
 
 
 def test_disk():
@@ -168,10 +155,8 @@ def test_orb_gap(cut=0.5, size=5000):
     """
     Generate and display source in form of orb with hole inside source.
 
-    :param size: int
-        number of points
-    :param cut: float
-        width of vertical slice (for better visual representation).
+    :param int size: of points
+    :param float cut: width of vertical slice (for better visual representation)
     """
 
     fig_orb_gap = plt.figure()
