@@ -107,11 +107,10 @@ def test_cone(cosines=False, size=1000):
     if not cosines:
         data = np.vstack((np.ones(size),
                           generate_cone(
-                                  theta_0=0.0,
-                                  d_theta=pi / 12.,
-                                  size=size,
-                                  cosines=False)
-                          ))
+                              theta_0=0.0,
+                              d_theta=pi / 12.,
+                              size=size,
+                              cosines=False)))
         
         data = np.vstack((data[0] * sin(data[2]) * cos(data[1]),
                           data[0] * sin(data[2]) * sin(data[1]),
@@ -121,13 +120,9 @@ def test_cone(cosines=False, size=1000):
         ax.set_zlabel('Z')
     
     else:
-        data = np.vstack((generate_cone(
-                theta_0=pi / 8.,
-                phi_0=pi / 4.,
-                d_theta=pi / 40.,
-                size=size,
-                cosines=True
-        )))
+        data = np.vstack(
+                (generate_cone(theta_0=pi / 8., phi_0=pi / 4.,
+                               d_theta=pi / 40., size=size, cosines=True)))
         
         data = data
         

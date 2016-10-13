@@ -19,10 +19,10 @@ import logging
 
 logging.basicConfig(level=logging.WARN)
 
-e = 1.61 * 10 ** -19 * 9.486833 * 10 ** 14
+E = 1.61 * 10 ** -19 * 9.486833 * 10 ** 14
 "effective electron charge (SI system)"
 
-a0 = 5.29 * 10 ** -11
+A0 = 5.29 * 10 ** -11
 "Bohr radius (SI system)"
 
 
@@ -65,7 +65,7 @@ class Simulation:
         """
         if name.lower() in ['moliere', 'VHB', 'universal']:
             self.potential_name = name
-            logging.info("Potential changed to {}.".format(name))
+            logging.info("Potential changed to %s." % name)
         else:
             logging.warning("Invalid potential name. "
                             "Current potential unchanged.")
@@ -107,7 +107,7 @@ class Simulation:
         rho = self.rho(energy, rm)
         delta = self.delta(rm, impact_par, energy)
 
-        temp = a0 * (impact_par + delta + rho) / (rho + rm)
+        temp = A0 * (impact_par + delta + rho) / (rho + rm)
         print(temp)
         selection = (temp < 1.) * (temp > -1.)
 
@@ -185,7 +185,7 @@ class Simulation:
         """
 
         z1, z2 = self.z1, self.z2
-        return z1 * z2 * e ** 2 / r * self.screen_func(r)
+        return z1 * z2 * E ** 2 / r * self.screen_func(r)
 
     def potential_deriv(self, r) -> ndarray:
         """
@@ -205,8 +205,8 @@ if __name__ == '__main__':
     sim = Simulation()
     logging.info("Class initialization successful.")
     logging.info("Running rm method.")
-    impact_par = base.uniform(0.2, 10, 100) * a0 / 10.
-    impact_par = np.arange(5, 100) / 200 * a0
+    impact_par = base.uniform(0.2, 10, 100) * A0 / 10.
+    impact_par = np.arange(5, 100) / 200 * A0
     energy = 1
     theta, impact_par = sim.calculate_theta(energy, impact_par)
     theta = (theta - np.pi) * 180 / np.pi

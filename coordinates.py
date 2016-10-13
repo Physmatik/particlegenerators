@@ -16,7 +16,7 @@ from particlegenerators import base
 from particlegenerators.directions import generate_isotropic
 
 
-def disk(radius: float = 1.0, size: int = 1000, polar=False) -> ndarray:
+def disk(radius=1.0, size=1000, polar=False) -> ndarray:
     """
     Generate random position in disk source. Origin in (0,0,0).
     
@@ -26,11 +26,11 @@ def disk(radius: float = 1.0, size: int = 1000, polar=False) -> ndarray:
     :return: (3, size) ndarray
         (rho, phi, 0) if polar True, (x, y, 0) otherwise.
     """
-
+    
     rho = np.sqrt(base.uniform(size=size)) * radius
     phi = base.uniform(size=size) * 2 * pi
     z = np.zeros(size)
-
+    
     if polar:
         position = np.vstack((rho,
                               phi,
@@ -39,7 +39,7 @@ def disk(radius: float = 1.0, size: int = 1000, polar=False) -> ndarray:
         position = np.vstack((rho * cos(phi),
                               rho * sin(phi),
                               z))
-
+    
     return position
 
 
@@ -53,11 +53,11 @@ def orb(radius=1., size=1000, spherical=False) -> ndarray:
     :return: (3, size) ndarray
         (rho, phi, theta) if spherical=True, (x, y, z) otherwise.
     """
-
+    
     rho = np.power(base.uniform(size=size), 1. / 3.) * radius
     phi = base.uniform(size=size) * 2 * pi
     theta = np.arccos(2 * base.uniform(size=size) - 1.)
-
+    
     if spherical:
         position = np.vstack((rho,
                               phi,
@@ -66,7 +66,7 @@ def orb(radius=1., size=1000, spherical=False) -> ndarray:
         position = np.vstack((rho * sin(theta) * cos(phi),
                               rho * sin(theta) * sin(phi),
                               rho * cos(theta)))
-
+    
     return position
 
 
@@ -87,7 +87,7 @@ def cylinder(radius=1.0, height=1.0, size=1000, cylindrical=False) -> ndarray:
     else:
         position = disk(radius=radius, size=size)
     position[2] = base.uniform(b=height, size=size)
-
+    
     return position
 
 
@@ -102,12 +102,12 @@ def orb_gap(r1=0.5, r2=1.0, size=1000, spherical=False) -> ndarray:
     :return: (3, size) ndarray
         (rho, phi, theta) if spherical is True, (x, y, z) otherwise.
     """
-
+    
     rho = np.power(base.uniform(size=size) * (r2 ** 3 - r1 ** 3) + r1 ** 3,
                    1. / 3.)
     position = np.vstack((rho,
                           generate_isotropic(size=size, cosines=False)))
-
+    
     if spherical:
         return position
     else:
@@ -142,7 +142,7 @@ def test_cylinder():
     """
     Generate and display cylinder source.
     """
-
+    
     fig_cylinder = plt.figure()
     fig_cylinder.suptitle('cylinder')
     ax_cylinder = fig_cylinder.add_subplot(111, projection='3d')
@@ -158,20 +158,20 @@ def test_orb_gap(cut=0.5, size=5000):
     :param int size: of points
     :param float cut: width of vertical slice (for better visual representation)
     """
-
+    
     fig_orb_gap = plt.figure()
     fig_orb_gap.suptitle('two concentric orbs')
     ax_orb_gap = fig_orb_gap.add_subplot(111, projection='3d')
-
+    
     data_orb_gap = orb_gap(size=size)
-
+    
     selection = np.abs(data_orb_gap[0]) < cut
-
+    
     ax_orb_gap.plot(data_orb_gap[0, selection],
                     data_orb_gap[1, selection],
                     data_orb_gap[2, selection],
                     'k.')
-
+    
     ax_orb_gap.set_xlim(-1., 1.)
     ax_orb_gap.set_ylim(-1., 1.)
     ax_orb_gap.set_zlim(-1., 1.)
@@ -179,19 +179,19 @@ def test_orb_gap(cut=0.5, size=5000):
 
 def test_run():
     """Run simple test for class methods."""
-
+    
     print("Test run.")
-
+    
     test_disk()
     test_orb()
     test_cylinder()
     test_orb_gap()
-
+    
     plt.show()
 
 
 if __name__ == '__main__':
     # noinspection PyUnresolvedReferences
     from mpl_toolkits.mplot3d import Axes3D
-
+    
     test_run()
