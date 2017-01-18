@@ -22,8 +22,8 @@ import logging
 from .base import *
 from . import coordinates
 from . import directions
-from . import nuclei_scattering
+from . import elastic_scattering
 
-__all__ = ['base', 'coordinates', 'directions', 'nuclei_scattering']
+__all__ = ['base', 'coordinates', 'directions', 'elastic_scattering.py']
 
 logging.info('particlegenerators module initialized.')

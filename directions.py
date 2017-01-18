@@ -120,9 +120,8 @@ def test_cone(cosines=False, size=1000):
         ax.set_zlabel('Z')
     
     else:
-        data = np.vstack(
-                (generate_cone(theta_0=pi / 8., phi_0=pi / 4.,
-                               d_theta=pi / 40., size=size, cosines=True)))
+        data = np.vstack((generate_cone(theta_0=pi / 8., phi_0=pi / 4.,
+                                        d_theta=pi / 40., size=size)))
         
         data = data
         
